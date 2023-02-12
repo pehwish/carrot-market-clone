@@ -8,5 +8,5 @@ module.exports = {
     extend: {},
   },
   darkMode: 'media', // media 브라우저 모드 따라감 class => 클래스 추가하면 바뀜
-  plugins: [],
+  plugins: [require('@tailwindcss/forms')],
 };
