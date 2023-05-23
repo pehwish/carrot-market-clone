@@ -1,10 +1,13 @@
 import Layout from '@components/layout';
 import TextArea from '@components/textarea';
 import useMutation from '@libs/client/useMutation';
+import { cls } from '@libs/client/utils';
 import { Answer, Post, User } from '@prisma/client';
 import type { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import useSWR from 'swr';
 
 interface AnswerWithUser extends Answer {
@@ -22,38 +25,64 @@ interface PostWithUser extends Post {
 interface CommunityPostResponse {
   ok: boolean;
   post: PostWithUser;
+  isWondering: boolean;
+}
+interface AnswerForm {
+  answer: string;
+}
+
+interface AnswerResponse {
+  ok: boolean;
+  response: Answer;
 }
 
 const CommunityPostDetail: NextPage = () => {
   const router = useRouter();
+  const { register, handleSubmit, reset } = useForm<AnswerForm>();
   const { data, mutate } = useSWR<CommunityPostResponse>(
     router.query.id ? `/api/posts/${router.query.id}` : null
   );
-  const [wonder] = useMutation(`/post/${router.query.id}/wonder`);
+  const [wonder, { loading }] = useMutation(
+    `/api/posts/${router.query.id}/wonder`
+  );
+  const [sendAnswer, { data: answerData, loading: answerLoading }] =
+    useMutation<AnswerResponse>(`/api/posts/${router.query.id}/answers`);
 
-  // useEffect(() => {
-  //   if (data && !data.ok) {
-  //     router.push('/community');
-  //   }
-  // }, [data, router]);
-
-  const onWonderClick = () => { 
+  const onWonderClick = () => {
     if (!data) return;
-    
-    mutate({
-      ...data,
-      post: {
-        ...data.post,
-        _count: {
-          ...data?.post?._count,
-          wondering:data?.post?._count?.wondering+1
-        }
-      }
-    });
-    //wonder({})
-  }
+    mutate(
+      {
+        ...data,
+        post: {
+          ...data.post,
+          _count: {
+            ...data.post._count,
+            wondering: data.isWondering
+              ? data.post._count.wondering - 1
+              : data.post._count.wondering + 1,
+          },
+        },
+        isWondering: !data.isWondering,
+      },
+      false
+    );
+    if (!loading) {
+      // race condition (경쟁상태) 막기 위해
+      wonder({});
+    }
+  };
 
-  console.log(data);
+  const onValid = (form: AnswerForm) => {
+    if (answerLoading) return;
+    sendAnswer(form);
+  };
+
+  useEffect(() => {
+    if (answerData && answerData.ok) {
+      reset();
+      mutate();
+    }
+  }, [answerData, reset, mutate]);
 
   return (
     <Layout canGoBack>
@@ -80,7 +109,13 @@ const CommunityPostDetail: NextPage = () => {
             {data?.post?.question}
           </div>
           <div className='flex px-4 space-x-5 mt-3 text-gray-700 py-2.5 border-t border-b-[2px]  w-full'>
-            <button onClick={onWonderClick} className='flex space-x-2 items-center text-sm'>
+            <button
+              onClick={onWonderClick}
+              className={cls(
+                'flex space-x-2 items-center text-sm',
+                data?.isWondering ? 'text-teal-400' : ''
+              )}
+            >
               <svg
                 className='w-4 h-4'
                 fill='none'
@@ -122,26 +157,27 @@ const CommunityPostDetail: NextPage = () => {
               <div className='w-8 h-8 bg-slate-200 rounded-full' />
               <div>
                 <span className='text-sm block font-medium text-gray-700'>
-                  {answer.user.name}
+                  {answer?.user?.name}
                 </span>
                 <span className='text-xs text-gray-500 block '>
-                  {answer.createAt}
+                  {answer?.createAt}
                 </span>
                 <p className='text-gray-700 mt-2'>{answer.answer}</p>
               </div>
             </div>
           ))}
         </div>
-        <div className='px-4'>
+        <form className='px-4' onSubmit={handleSubmit(onValid)}>
           <TextArea
+            register={register('answer', { required: true, minLength: 5 })}
             name='description'
             placeholder='Answer this question!'
             required
           />
           <button className='mt-2 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:outline-none '>
-            Reply
+            {answerLoading ? 'Loading...' : 'Reply'}
           </button>
-        </div>
+        </form>
       </div>
     </Layout>
   );
