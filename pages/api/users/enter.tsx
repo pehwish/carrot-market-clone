@@ -1,8 +1,7 @@
-import twilio from 'twilio';
-import { NextApiRequest, NextApiResponse } from 'next';
-import withHandler, { ResponseType } from '@libs/server/withHandler';
 import client from '@libs/server/client';
-import smtpTransport from '@libs/server/email';
+import withHandler, { ResponseType } from '@libs/server/withHandler';
+import { NextApiRequest, NextApiResponse } from 'next';
+import twilio from 'twilio';
 
 const twilioClient = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
 

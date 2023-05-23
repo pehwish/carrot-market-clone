@@ -1,11 +1,11 @@
-import type { NextPage } from 'next';
 import Layout from '@components/layout';
 import TextArea from '@components/textarea';
+import useMutation from '@libs/client/useMutation';
+import { Answer, Post, User } from '@prisma/client';
+import type { NextPage } from 'next';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
-import { useEffect } from 'react';
-import { Post, User, Answer } from '@prisma/client';
-import Link from 'next/link';
 
 interface AnswerWithUser extends Answer {
   user: User;
@@ -26,15 +26,32 @@ interface CommunityPostResponse {
 
 const CommunityPostDetail: NextPage = () => {
   const router = useRouter();
-  const { data, error } = useSWR<CommunityPostResponse>(
+  const { data, mutate } = useSWR<CommunityPostResponse>(
     router.query.id ? `/api/posts/${router.query.id}` : null
   );
+  const [wonder] = useMutation(`/post/${router.query.id}/wonder`);
 
   // useEffect(() => {
   //   if (data && !data.ok) {
   //     router.push('/community');
   //   }
   // }, [data, router]);
+
+  const onWonderClick = () => { 
+    if (!data) return;
+    
+    mutate({
+      ...data,
+      post: {
+        ...data.post,
+        _count: {
+          ...data?.post?._count,
+          wondering:data?.post?._count?.wondering+1
+        }
+      }
+    });
+    //wonder({})
+  }
 
   console.log(data);
 
@@ -63,7 +80,7 @@ const CommunityPostDetail: NextPage = () => {
             {data?.post?.question}
           </div>
           <div className='flex px-4 space-x-5 mt-3 text-gray-700 py-2.5 border-t border-b-[2px]  w-full'>
-            <span className='flex space-x-2 items-center text-sm'>
+            <button onClick={onWonderClick} className='flex space-x-2 items-center text-sm'>
               <svg
                 className='w-4 h-4'
                 fill='none'
@@ -79,7 +96,7 @@ const CommunityPostDetail: NextPage = () => {
                 ></path>
               </svg>
               <span>궁금해요 {data?.post?._count?.wondering}</span>
-            </span>
+            </button>
             <span className='flex space-x-2 items-center text-sm'>
               <svg
                 className='w-4 h-4'
