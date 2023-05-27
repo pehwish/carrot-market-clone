@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["filteredRelationCount"]
 }
 
 datasource db {
@@ -12,28 +13,30 @@ datasource db {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  phone    String?     @unique
-  email    String?  @unique
-  avatar   String?
-  name     String
-  createAt DateTime @default(now())
-  updateAt DateTime @updatedAt
-  tokens     Token[]
-  products  Product[]
-  fav Fav[]
-  posts Post[]
-  answers Answer[] 
-  wonderings Wondering[]
+  id              Int         @id @default(autoincrement())
+  phone           String?     @unique
+  email           String?     @unique
+  avatar          String?
+  name            String
+  createAt        DateTime    @default(now())
+  updateAt        DateTime    @updatedAt
+  tokens          Token[]
+  products        Product[]
+  posts           Post[]
+  answers         Answer[]
+  wonderings      Wondering[]
+  writtenReviews  Review[]    @relation(name: "writtenReviews")
+  receivedReviews Review[]    @relation(name: "receivedReviews")
+  records         Record[]
 }
 
 model Token {
-  id        Int    @id @default(autoincrement())
-  payload   String @unique
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createAt  DateTime @default(now())
-  updateAt  DateTime @updatedAt
-  userId    Int
+  id       Int      @id @default(autoincrement())
+  payload  String   @unique
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  userId   Int
 }
 
 model Product {
@@ -46,18 +49,7 @@ model Product {
   name        String
   price       Int
   description String   @db.MediumText
-  favs Fav[]
-}
-
-model Fav{
-  id          Int      @id @default(autoincrement())
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade) 
-  userId Int
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  records     Record[]
 }
 
 model Post {
@@ -84,7 +76,6 @@ model Answer {
   answer    String   @db.MediumText
 }
 
-
 model Wondering {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
@@ -93,4 +84,33 @@ model Wondering {
   userId    Int
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    Int
+}
+
+model Review {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  review       String   @db.MediumText
+  createdBy    User     @relation(name: "writtenReviews", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById  Int
+  createdFor   User     @relation(name: "receivedReviews", fields: [createdForId], references: [id], onDelete: Cascade)
+  createdForId Int
+  score        Int      @default(1)
+}
+
+enum Kind {
+  Purchase
+  Sale
+  Fav
+}
+
+model Record {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  kind      Kind
 }

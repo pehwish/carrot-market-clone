@@ -21,6 +21,15 @@ npx prisma db push
 npx prisma studio
 ```
 
+### db 레코드에 새로운 컬럼을 추가했을때
+
+We found changes that cannot be executed: // 에러 발생
+해결 방법
+
+1. 데이터베이스 삭제 후 재시작
+2. 원래 있던 리뷰에 새 컬럼 넣지 않기(필수 아니게)
+3. 기본값 넣어주기
+
 ## Getting Started
 
 First, run the development server:
