@@ -7,7 +7,7 @@ import { Product, User } from '@prisma/client';
 import type { NextPage } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import useSWR, { useSWRConfig } from 'swr';
+import useSWR from 'swr';
 
 interface ProductWithUser extends Product {
   user: User;
@@ -22,11 +22,12 @@ interface ItemDetailResponse {
 const ItemDetail: NextPage = () => {
   const { user, isLoading } = useUser();
   const router = useRouter();
-  const { mutate } = useSWRConfig();
   const { data, mutate: boundMutaite } = useSWR<any>(
     router.query.id ? `/api/products/${router.query.id}` : null
   );
-  const [toggleFav] = useMutation(`/api/products/${router.query.id}/fav`);
+  const [toggleFav] = useMutation<ItemDetailResponse>(
+    `/api/products/${router.query.id}/fav`
+  );
 
   const onFavClick = () => {
     toggleFav({});
