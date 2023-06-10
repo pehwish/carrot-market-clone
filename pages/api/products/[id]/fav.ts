@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import withHandler, { ResponseType } from '@libs/server/withHandler';
 import client from '@libs/server/client';
 import { withApiSession } from '@libs/server/withSession';
+import { Kind } from '@prisma/client';
 
 async function handler(
   req: NextApiRequest,
@@ -12,26 +13,28 @@ async function handler(
     session: { user },
   } = req;
 
-  const alreadyExist = await client.fav.findFirst({
+  const alreadyExists = await client.record.findFirst({
     where: {
       productId: +id.toString(),
       userId: user?.id,
+      kind: Kind.Fav,
     },
   });
 
-  if (alreadyExist) {
-    //delete
-    await client.fav.deleteMany({
+  if (alreadyExists) {
+    await client.record.delete({
       where: {
-        userId: user?.id,
+        id: alreadyExists.id,
       },
     });
   } else {
-    //create
-    await client.fav.create({
+    await client.record.create({
       data: {
+        kind: Kind.Fav,
         user: {
-          connect: { id: user?.id },
+          connect: {
+            id: user?.id,
+          },
         },
         product: {
           connect: {

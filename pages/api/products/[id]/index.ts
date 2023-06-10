@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import withHandler, { ResponseType } from '@libs/server/withHandler';
 import client from '@libs/server/client';
 import { withApiSession } from '@libs/server/withSession';
+import { Kind } from '@prisma/client';
 
 async function handler(
   req: NextApiRequest,
@@ -43,10 +44,11 @@ async function handler(
     },
   });
   const isLiked = Boolean(
-    await client.fav.findFirst({
+    await client.record.findFirst({
       where: {
         productId: product?.id,
-        userId: user?.id,
+        userId: product?.user.id,
+        kind: Kind.Fav,
       },
       select: {
         id: true,
