@@ -15,9 +15,7 @@ interface ProfileResponse {
 
 export default function useUser(publicPages?: string[]) {
   const router = useRouter();
-  const { data, error } = useSWR<ProfileResponse>(
-    publicPages?.includes(router.pathname) ? null : '/api/users/me'
-  );
+  const { data, error } = useSWR<ProfileResponse>('/api/users/me');
 
   useEffect(() => {
     if (data && !data.ok && !publicPages?.includes(router.pathname)) {

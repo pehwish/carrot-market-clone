@@ -5,6 +5,7 @@ import useUser from '@libs/client/useUser';
 import { cls } from '@libs/client/utils';
 import { Product, User } from '@prisma/client';
 import type { NextPage } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
@@ -44,15 +45,22 @@ const ItemDetail: NextPage = () => {
     <Layout canGoBack>
       <div className='px-4  py-4'>
         <div className='mb-8'>
-          <img
-            src={`https://imagedelivery.net/f59nsiCmngpWG3UeH6L7VA/${data?.product?.image}/public`}
-            className='h-96 bg-slate-300'
-          />
+          <div className='relative pb-80'>
+            <Image
+              src={`https://imagedelivery.net/f59nsiCmngpWG3UeH6L7VA/${data?.product?.image}/public`}
+              className='h-96 bg-slate-300 object-cover'
+              alt={data?.product?.name || ''}
+              fill
+            />
+          </div>
           <div className='flex cursor-pointer py-3 border-t border-b items-center space-x-3'>
             {data?.product?.user?.avatar ? (
-              <img
+              <Image
                 src={`https://imagedelivery.net/f59nsiCmngpWG3UeH6L7VA/${data?.product?.user?.avatar}/avatar`}
                 className='w-12 h-12 rounded-full'
+                width={48}
+                height={48}
+                alt={data?.product?.user?.name || ''}
               />
             ) : (
               <div className='w-12 h-12 rounded-full bg-slate-300' />
