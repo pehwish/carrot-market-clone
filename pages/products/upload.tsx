@@ -1,13 +1,13 @@
-import type { NextPage } from 'next';
 import Button from '@components/button';
 import Input from '@components/input';
 import Layout from '@components/layout';
 import TextArea from '@components/textarea';
-import { useForm } from 'react-hook-form';
 import useMutation from '@libs/client/useMutation';
-import { useEffect, useState } from 'react';
 import { Product } from '@prisma/client';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 interface UploadProductForm {
   name: string;
@@ -59,7 +59,7 @@ const Upload: NextPage = () => {
   }, [photo]);
 
   return (
-    <Layout canGoBack title='Upload Product'>
+    <Layout canGoBack title='Upload Product' seoTitle='upload product'>
       <form className='p-4 space-y-4' onSubmit={handleSubmit(onValid)}>
         <div>
           {photoPreview ? (
