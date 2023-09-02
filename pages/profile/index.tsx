@@ -1,11 +1,13 @@
-import type { NextPage } from 'next';
-import Link from 'next/link';
 import Layout from '@components/layout';
 import useUser from '@libs/client/useUser';
-import useSWR from 'swr';
-import { Review, User } from '@prisma/client';
 import { cls } from '@libs/client/utils';
+import client from '@libs/server/client';
+import { withSsrSession } from '@libs/server/withSession';
+import { Review, User } from '@prisma/client';
+import type { NextPage, NextPageContext } from 'next';
 import Image from 'next/image';
+import Link from 'next/link';
+import useSWR, { SWRConfig } from 'swr';
 
 interface ReviewWithUser extends Review {
   user: User;
@@ -107,16 +109,16 @@ const Profile: NextPage = () => {
             </span>
           </Link>
         </div>
-        {data?.reviews?.map((review) => (
+        {data?.reviews?.map(review => (
           <div className='mt-12' key={review.id}>
             <div className='flex space-x-4 items-center'>
               <div className='w-12 h-12 rounded-full bg-slate-500' />
               <div>
                 <h4 className='text-sm font-bold text-gray-800'>
-                  {review.createdBy.name}
+                  {review?.createdBy?.name}
                 </h4>
                 <div className='flex items-center'>
-                  {[1, 2, 3, 4, 5].map((star) => (
+                  {[1, 2, 3, 4, 5].map(star => (
                     <svg
                       key={star}
                       className={cls(
@@ -146,4 +148,31 @@ const Profile: NextPage = () => {
   );
 };
 
-export default Profile;
+const Page: NextPage<{ profile: User }> = ({ profile }) => {
+  return (
+    <SWRConfig
+      value={{
+        fallback: {
+          '/api/users/me': { ok: true, profile }
+        }
+      }}
+    >
+      <Profile />
+    </SWRConfig>
+  );
+};
+
+export const getServerSideProps = withSsrSession(async function ({
+  req
+}: NextPageContext) {
+  const profile = await client.user.findUnique({
+    where: { id: req?.session.user?.id }
+  });
+  return {
+    props: {
+      profile: JSON.parse(JSON.stringify(profile))
+    }
+  };
+});
+
+export default Page;
